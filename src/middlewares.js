@@ -30,32 +30,39 @@ export async function jwtGuard(req, res, next) {
   try {
     payload = await verifyToken(token);
     console.log('JWT:', payload);
-    delete payload.iat; // issued at
-    delete payload.exp; // expiration time
   } catch (err) {
     return res.status(401).send('Unauthorized 2');
   }
 
-  // 3. check session max age (max)
-  if (payload.max < Date.now()) {
+  // 3. check payload fields
+  if (!payload.sub || !payload.ver || !payload.max) {
     return res.status(401).send('Unauthorized 3');
   }
 
-  // 4. check user exists
+  // 4. check session max age (max)
+  if (payload.max < Date.now()) {
+    return res.status(401).send('Unauthorized 4');
+  }
+
+  // 5. check user exists
   const db = await connect(env.SQLITE_DB_FILENAME);
   const user = await getUser(db, { id: payload.sub });
   db.close();
 
   if (!user) {
-    return res.status(401).send('Unauthorized 4');
-  }
-
-  // 5. check user jwt version (ver)
-  if (user.jwt_version !== payload.ver) {
     return res.status(401).send('Unauthorized 5');
   }
 
-  const newToken = generateToken({ ...payload });
+  // 6. check user jwt version (ver)
+  if (user.jwt_version !== payload.ver) {
+    return res.status(401).send('Unauthorized 6');
+  }
+
+  const { iat, exp, ...data } = payload;
+
+  req.user = data;
+
+  const newToken = generateToken(data);
 
   res.cookie('access_token', newToken, {
     httpOnly: true,
