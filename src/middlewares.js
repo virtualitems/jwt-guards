@@ -39,23 +39,18 @@ export async function jwtGuard(req, res, next) {
     return res.status(401).send('Unauthorized 3');
   }
 
-  // 4. check session max age (max)
-  if (payload.max < Date.now()) {
-    return res.status(401).send('Unauthorized 4');
-  }
-
-  // 5. check user exists
+  // 4. check user exists
   const db = await connect(env.SQLITE_DB_FILENAME);
   const user = await getUser(db, { id: payload.sub });
   db.close();
 
   if (!user) {
-    return res.status(401).send('Unauthorized 5');
+    return res.status(401).send('Unauthorized 4');
   }
 
-  // 6. check user jwt version (ver)
+  // 5. check user jwt version (ver)
   if (user.jwt_version !== payload.ver) {
-    return res.status(401).send('Unauthorized 6');
+    return res.status(401).send('Unauthorized 5');
   }
 
   // remove iat and exp fields from payload
@@ -64,15 +59,17 @@ export async function jwtGuard(req, res, next) {
   // attach user data to request object
   req.user = data;
 
-  // refresh token
-  const newToken = generateToken(data);
+  // refresh token if token can be refreshed
+  if (payload.max > Date.now()) {
+    const newToken = generateToken(data);
 
-  res.cookie('access_token', newToken, {
-    httpOnly: true,
-    secure: env.NODE_ENV === 'production',
-    sameSite: 'Strict',
-    maxAge: payload.max,
-  });
+    res.cookie('access_token', newToken, {
+      httpOnly: true,
+      secure: env.NODE_ENV === 'production',
+      sameSite: 'Strict',
+      maxAge: payload.max,
+    });
+  }
 
   next();
 }
