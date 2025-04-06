@@ -12,9 +12,7 @@ import {
   update,
 } from './middlewares.js';
 
-async function main() {
-  const PORT = env.LISTEN_TO;
-
+async function main(port) {
   const app = Express();
 
   app.use(Express.json());
@@ -35,7 +33,7 @@ async function main() {
 
   app.delete('/:id', jwtGuard, destroy);
 
-  app.listen(PORT, () => console.log(`http://localhost:${PORT}`));
+  app.listen(port, () => console.log(`http://localhost:${port}`));
 }
 
 connect(env.SQLITE_DB_FILENAME).then((db) => {
@@ -44,6 +42,6 @@ connect(env.SQLITE_DB_FILENAME).then((db) => {
       db.close();
     })
     .then(() => {
-      main().catch(console.error);
+      main(env.LISTEN_TO).catch(console.error);
     });
 });
