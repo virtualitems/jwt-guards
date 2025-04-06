@@ -17,7 +17,7 @@ describe('Users test suite', () => {
 
   let cookies = [];
 
-  skip('should create a user', async () => {
+  it('should create a user', async () => {
     // Arrange
     const reqOptions = {
       origin: baseUrl,
@@ -65,6 +65,8 @@ describe('Users test suite', () => {
   });
 
   it('should list all users', async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for different jwt timestamps
+
     // Arrange
     const reqOptions = {
       origin: baseUrl,
@@ -79,9 +81,9 @@ describe('Users test suite', () => {
     const { statusCode, headers, body } = await httpRequest(reqOptions);
     let json = null;
 
-    try{
+    try {
       json = JSON.parse(body.toString('utf8'));
-    }catch(e){
+    } catch (e) {
       throw new Error('Error parsing JSON');
     }
 
@@ -91,6 +93,7 @@ describe('Users test suite', () => {
     assert.ok(body.length > 0, 'Response body is empty');
     assert.ok(Array.isArray(json), 'Response body is not an array');
     assert.ok(json.length > 0, 'Response body does not contain users');
+    assert.ok(cookies[0] !== headers['set-cookie'][0], 'Cookies should be different');
     assert.equal(json[0].name, user.name);
   });
 });
