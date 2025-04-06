@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "start": "node ./src/**/*.js",
-    "dev": "node --trace-warnings --watch src/main.js"
+    "start": "node ./src/main.js",
+    "dev": "node --trace-warnings --watch ./src/main.js"
   },
   "author": "",
   "license": "ISC",
