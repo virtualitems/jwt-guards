@@ -16,17 +16,52 @@ import cookieParser from 'cookie-parser';
 
 async function protectedRoute(req, res, next) {
   const token = req.cookies.access_token;
+
+  // 1 check if token exists
   if (!token) {
-    return res.status(401).send('Unauthorized');
+    return res.status(401).send('Unauthorized 1');
   }
 
+  // 2. verify token signature
+  let payload;
   try {
-    req.user = await verifyToken(token, env.JWT_SECRET);
-    console.log('JWT:', req.user);
-    next();
+    payload = await verifyToken(token);
+    console.log('JWT:', payload);
+    delete payload.iat; // issued at
+    delete payload.exp; // expiration time
   } catch (err) {
-    return res.status(401).send('Unauthorized');
+    return res.status(401).send('Unauthorized 2');
   }
+
+  // 3. check session max age (max)
+  if (payload.max < Date.now()) {
+    return res.status(401).send('Unauthorized 3');
+  }
+
+  // 4. check user exists
+  const db = await connect(env.SQLITE_DB_FILENAME);
+  const user = await getUser(db, { id: payload.sub });
+  db.close();
+
+  if (!user) {
+    return res.status(401).send('Unauthorized 4');
+  }
+
+  // 5. check user jwt version (ver)
+  if (user.jwt_version !== payload.ver) {
+    return res.status(401).send('Unauthorized 5');
+  }
+
+  const newToken = generateToken({ ...payload });
+
+  res.cookie('access_token', newToken, {
+    httpOnly: true,
+    secure: env.NODE_ENV === 'production',
+    sameSite: 'Strict',
+    maxAge: payload.max,
+  });
+
+  next();
 }
 
 async function main() {
@@ -61,13 +96,19 @@ async function main() {
       return;
     }
 
-    const token = generateToken({ id: user.id });
+    const maxAge = Date.now() + 1000 * 60 * 60; // 1 hour
+
+    const token = generateToken({
+      sub: user.id,
+      ver: user.jwt_version,
+      max: maxAge,
+    });
 
     res.cookie('access_token', token, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'Strict',
-      maxAge: 1000 * 60 * 60, // 1 hour
+      maxAge,
     });
     res.writeHead(200);
     res.end();
