@@ -5,7 +5,7 @@ export const { parsed: env = {} } = dotenv.config();
 const keys = [
   'NODE_ENV',
   'LISTEN_TO',
-  'HASH_SALT_ROUNDS',
+  'PASSWORD_HASH_SALT_ROUNDS',
   'SQLITE_DB_FILENAME',
   'JWT_SECRET',
   'JWT_EXPIRATION_TIME',

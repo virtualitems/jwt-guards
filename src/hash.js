@@ -6,7 +6,7 @@ import { env } from './env.js';
  * @returns {string}
  */
 export function createHash(str) {
-  return hashSync(str, Number(env.HASH_SALT_ROUNDS));
+  return hashSync(str, Number(env.PASSWORD_HASH_SALT_ROUNDS));
 }
 
 /**
