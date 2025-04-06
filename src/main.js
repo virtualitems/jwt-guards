@@ -13,6 +13,8 @@ import {
 } from './middlewares.js';
 
 async function main() {
+  const PORT = env.LISTEN_TO;
+
   const app = Express();
 
   app.use(Express.json());
@@ -20,8 +22,6 @@ async function main() {
   app.use(Express.urlencoded({ extended: true }));
 
   app.use(cookieParser());
-
-  const PORT = env.LISTEN_TO;
 
   app.post('/login', login);
 
