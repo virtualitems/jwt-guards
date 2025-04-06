@@ -25,7 +25,7 @@ export async function jwtGuard(req, res, next) {
     return res.status(401).send('Unauthorized 1');
   }
 
-  // 2. verify token signature
+  // 2. verify token signature and expiration
   let payload;
   try {
     payload = await verifyToken(token);
