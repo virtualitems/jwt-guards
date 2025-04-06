@@ -1,10 +1,17 @@
 import jwt from 'jsonwebtoken';
 import { env } from './env.js';
 
-export function generateToken(payload) {
-  return jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
-  });
+export function generateToken(expirationTime, refreshTime, data) {
+  const payload = {
+    ...data,
+    max: Date.now() + refreshTime * 1000,
+  };
+
+  const options = {
+    expiresIn: expirationTime,
+  };
+
+  return jwt.sign(payload, env.JWT_SECRET, options);
 }
 
 export function verifyToken(token) {

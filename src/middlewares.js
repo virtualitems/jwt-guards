@@ -65,13 +65,18 @@ export async function jwtGuard(req, res, next) {
 
   // refresh token if token can be refreshed
   if (payload.max > Date.now()) {
-    const newToken = generateToken(data);
 
-    res.cookie('access_token', newToken, {
+    const refreshTime = Number(env.JWT_REFRESH_EXPIRATION_TIME);
+    const expirationTime = Number(env.JWT_EXPIRATION_TIME);
+    const cookieMaxAge = Number(env.JWT_COOKIE_MAX_AGE);
+
+    const newToken = generateToken(expirationTime, refreshTime, data);
+
+    res.cookie(env.JWT_COOKIE_NAME, newToken, {
       httpOnly: true,
       secure: env.NODE_ENV === 'production',
       sameSite: 'Strict',
-      maxAge: payload.max,
+      maxAge: cookieMaxAge,
     });
   }
 
@@ -105,19 +110,20 @@ export async function login(req, res) {
     return;
   }
 
-  const maxAge = Date.now() + 1000 * 60 * 60; // 1 hour
+  const refreshTime = Number(env.JWT_REFRESH_EXPIRATION_TIME);
+  const expirationTime = Number(env.JWT_EXPIRATION_TIME);
+  const cookieMaxAge = Number(env.JWT_COOKIE_MAX_AGE);
 
-  const token = generateToken({
+  const token = generateToken(expirationTime, refreshTime, {
     sub: user.id,
     ver: user.jwt_version,
-    max: maxAge,
   });
 
-  res.cookie('access_token', token, {
+  res.cookie(env.JWT_COOKIE_NAME, token, {
     httpOnly: true,
     secure: env.NODE_ENV === 'production',
     sameSite: 'Strict',
-    maxAge,
+    maxAge: cookieMaxAge,
   });
   res.writeHead(200);
   res.end();

@@ -8,7 +8,10 @@ const keys = [
   'HASH_SALT_ROUNDS',
   'SQLITE_DB_FILENAME',
   'JWT_SECRET',
-  'JWT_EXPIRES_IN',
+  'JWT_EXPIRATION_TIME',
+  'JWT_REFRESH_EXPIRATION_TIME',
+  'JWT_COOKIE_NAME',
+  'JWT_COOKIE_MAX_AGE',
 ];
 
 for (const key of keys) {
