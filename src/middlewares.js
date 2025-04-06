@@ -36,7 +36,7 @@ export async function jwtGuard(req, res, next) {
   }
 
   // 3. check payload fields
-  if (!payload.sub || !payload.ver || !payload.max) {
+  if (!payload.sub || !payload.ver || !payload.rex) {
     res.clearCookie('access_token');
     return res.status(401).send('Unauthorized 3');
   }
@@ -64,7 +64,7 @@ export async function jwtGuard(req, res, next) {
   req.user = data;
 
   // refresh token if token can be refreshed
-  if (payload.max > Date.now()) {
+  if (payload.rex > Date.now()) {
 
     const refreshTime = Number(env.JWT_REFRESH_EXPIRATION_TIME);
     const expirationTime = Number(env.JWT_EXPIRATION_TIME);

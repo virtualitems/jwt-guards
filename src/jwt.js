@@ -4,7 +4,7 @@ import { env } from './env.js';
 export function generateToken(expirationTime, refreshTime, data) {
   const payload = {
     ...data,
-    max: Date.now() + refreshTime * 1000,
+    rex: Date.now() + refreshTime * 1000, // refresh expiration
   };
 
   const options = {
