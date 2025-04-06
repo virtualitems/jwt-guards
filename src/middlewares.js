@@ -31,11 +31,13 @@ export async function jwtGuard(req, res, next) {
     payload = await verifyToken(token);
     console.log('JWT:', payload);
   } catch (err) {
+    res.clearCookie('access_token');
     return res.status(401).send('Unauthorized 2');
   }
 
   // 3. check payload fields
   if (!payload.sub || !payload.ver || !payload.max) {
+    res.clearCookie('access_token');
     return res.status(401).send('Unauthorized 3');
   }
 
@@ -45,11 +47,13 @@ export async function jwtGuard(req, res, next) {
   db.close();
 
   if (!user) {
+    res.clearCookie('access_token');
     return res.status(401).send('Unauthorized 4');
   }
 
   // 5. check user jwt version (ver)
   if (user.jwt_version !== payload.ver) {
+    res.clearCookie('access_token');
     return res.status(401).send('Unauthorized 5');
   }
 
