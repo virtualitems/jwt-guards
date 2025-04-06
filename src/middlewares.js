@@ -58,10 +58,13 @@ export async function jwtGuard(req, res, next) {
     return res.status(401).send('Unauthorized 6');
   }
 
+  // remove iat and exp fields from payload
   const { iat, exp, ...data } = payload;
 
+  // attach user data to request object
   req.user = data;
 
+  // refresh token
   const newToken = generateToken(data);
 
   res.cookie('access_token', newToken, {
