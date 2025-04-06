@@ -15,9 +15,9 @@ import { createHash, compareHash } from './hash.js';
 import cookieParser from 'cookie-parser';
 
 async function protectedRoute(req, res, next) {
+  // 1 check if token exists
   const token = req.cookies.access_token;
 
-  // 1 check if token exists
   if (!token) {
     return res.status(401).send('Unauthorized 1');
   }
