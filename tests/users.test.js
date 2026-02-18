@@ -339,4 +339,124 @@ describe('JWT Guards Test Suite', () => {
       'Should clear cookies when version mismatch'
     );
   });
+
+  it('11. Permissions: user with only basic permission [1] should access / but not /admin', async () => {
+    const bodyData = JSON.stringify({
+      username: 'basicuser',
+      password: 'basicpass',
+    });
+
+    const loginReqOptions = {
+      origin: baseUrl,
+      path: '/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: bodyData,
+    };
+
+    const loginResponse = await httpRequest(loginReqOptions);
+    assert.equal(loginResponse.statusCode, 204, 'Login should return 204');
+
+    const cookies = parseCookies(loginResponse.headers['set-cookie']);
+    const basicAccessToken = cookies.access_token;
+    const basicRefreshToken = cookies.refresh_token;
+
+    // Should access /
+    const indexReqOptions = {
+      origin: baseUrl,
+      path: '/',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `access_token=${basicAccessToken}; refresh_token=${basicRefreshToken}`,
+      },
+    };
+
+    let response = await httpRequest(indexReqOptions);
+    assert.equal(
+      response.statusCode,
+      200,
+      'User with permission [1] should access /'
+    );
+
+    // Should NOT access /admin
+    const adminReqOptions = {
+      origin: baseUrl,
+      path: '/admin',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `access_token=${basicAccessToken}; refresh_token=${basicRefreshToken}`,
+      },
+    };
+
+    response = await httpRequest(adminReqOptions);
+    assert.equal(
+      response.statusCode,
+      403,
+      'User with only permission [1] should NOT access /admin (403 Forbidden)'
+    );
+  });
+
+  it('12. Permissions: user with only admin permission [2] should access /admin but not /', async () => {
+    const bodyData = JSON.stringify({
+      username: 'adminuser',
+      password: 'adminpass',
+    });
+
+    const loginReqOptions = {
+      origin: baseUrl,
+      path: '/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: bodyData,
+    };
+
+    const loginResponse = await httpRequest(loginReqOptions);
+    assert.equal(loginResponse.statusCode, 204, 'Login should return 204');
+
+    const cookies = parseCookies(loginResponse.headers['set-cookie']);
+    const adminAccessToken = cookies.access_token;
+    const adminRefreshToken = cookies.refresh_token;
+
+    // Should access /admin
+    const adminReqOptions = {
+      origin: baseUrl,
+      path: '/admin',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `access_token=${adminAccessToken}; refresh_token=${adminRefreshToken}`,
+      },
+    };
+
+    let response = await httpRequest(adminReqOptions);
+    assert.equal(
+      response.statusCode,
+      200,
+      'User with permission [2] should access /admin'
+    );
+
+    // Should NOT access /
+    const indexReqOptions = {
+      origin: baseUrl,
+      path: '/',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `access_token=${adminAccessToken}; refresh_token=${adminRefreshToken}`,
+      },
+    };
+
+    response = await httpRequest(indexReqOptions);
+    assert.equal(
+      response.statusCode,
+      403,
+      'User with only permission [2] should NOT access / (403 Forbidden)'
+    );
+  });
 });

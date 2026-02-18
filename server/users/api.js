@@ -46,10 +46,24 @@ export async function login(req, res) {
     return
   }
 
+  let permissions = []
+
+  try {
+    const permissionsRows = await db.all(
+      'SELECT permission_id FROM user_permissions WHERE user_id = ?',
+      [user.id]
+    )
+    permissions = permissionsRows.map(row => row.permission_id)
+  } catch (err) {
+    console.error(err)
+    res.status(500).send('Internal server error')
+    return
+  }
+
   const payload = {
     sub: user.id,
     ver: user.jwt_version,
-    per: [1, 2]
+    per: permissions
   }
 
   const accessToken = new JsonWebToken(

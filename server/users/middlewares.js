@@ -3,6 +3,37 @@ import { env } from '../shared/env.js'
 import { JsonWebToken } from './jwt.js'
 
 /**
+ * Middleware para validar permisos del usuario
+ *
+ * @param {number[]} requiredPermissions - Array de IDs de permisos requeridos
+ * @returns {Function} Middleware function
+ */
+export function permissionsGuard(requiredPermissions) {
+  return async (req, res, next) => {
+    try {
+      if (req.user === undefined || req.user.per === undefined) {
+        return res.status(403).end()
+      }
+
+      const userPermissions = req.user.per
+
+      const hasPermission = requiredPermissions.some(permission =>
+        userPermissions.includes(permission)
+      )
+
+      if (hasPermission === false) {
+        return res.status(403).end()
+      }
+
+      next()
+    } catch (err) {
+      console.error(err)
+      return res.status(500).end()
+    }
+  }
+}
+
+/**
  * Middleware para validar JWT en solicitudes protegidas
  *
  * @param {import('express').Request} req
