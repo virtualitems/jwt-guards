@@ -1,6 +1,8 @@
 import { describe, it, before } from 'node:test';
 import * as assert from 'node:assert';
 import { httpRequest } from './requests.js';
+import { SqliteDatabase } from '../server/shared/sqlite.js';
+import { env } from '../server/shared/env.js';
 
 describe('JWT Guards Test Suite', () => {
   const baseUrl = 'http://localhost';
@@ -278,6 +280,63 @@ describe('JWT Guards Test Suite', () => {
       response.statusCode,
       401,
       'Should not allow access without cookies after logout'
+    );
+  });
+
+  it('10. JWT version change: should return 401 when ver is updated in database', async () => {
+    const bodyData = JSON.stringify({
+      username: testUser.username,
+      password: testUser.password,
+    });
+
+    const loginReqOptions = {
+      origin: baseUrl,
+      path: '/login',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: bodyData,
+    };
+
+    const loginResponse = await httpRequest(loginReqOptions);
+    assert.equal(loginResponse.statusCode, 204, 'Login should return 204');
+
+    const cookies = parseCookies(loginResponse.headers['set-cookie']);
+    const testAccessToken = cookies.access_token;
+    const testRefreshToken = cookies.refresh_token;
+
+    const db = new SqliteDatabase(env.SQLITE_DB_FILENAME);
+
+    const reqOptions = {
+      origin: baseUrl,
+      path: '/',
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Cookie: `access_token=${testAccessToken}; refresh_token=${testRefreshToken}`,
+      },
+    };
+
+    let response = await httpRequest(reqOptions);
+    assert.equal(response.statusCode, 200, 'Should allow access before version change');
+
+    await db.run('UPDATE users SET jwt_version = ? WHERE id = 1', [Date.now()]);
+
+    response = await httpRequest(reqOptions);
+    assert.equal(
+      response.statusCode,
+      401,
+      'Should return 401 when jwt_version changes in database'
+    );
+
+    const setCookies = response.headers['set-cookie'] || [];
+    const clearedCookies = setCookies.filter((c) =>
+      c.includes('Max-Age=0') || c.includes('Expires=Thu, 01 Jan 1970')
+    );
+    assert.ok(
+      clearedCookies.length > 0,
+      'Should clear cookies when version mismatch'
     );
   });
 });
