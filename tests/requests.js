@@ -8,13 +8,7 @@ import { request } from 'node:http';
  */
 export function httpRequest(options) {
   return new Promise((resolve, reject) => {
-    const req = request(options);
-
-    if (options.body !== undefined) {
-      req.write(options.body);
-    }
-
-    req.on('response', (res) => {
+    const req = request(options, (res) => {
       const chunks = [];
 
       res.on('data', (chunk) => {
@@ -34,6 +28,10 @@ export function httpRequest(options) {
     req.on('error', (e) => {
       reject(e);
     });
+
+    if (options.body !== undefined) {
+      req.write(options.body);
+    }
 
     req.end();
   });
