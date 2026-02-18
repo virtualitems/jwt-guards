@@ -17,7 +17,7 @@ export function permissionsGuard(requiredPermissions) {
 
       const userPermissions = req.user.per
 
-      const hasPermission = requiredPermissions.some(permission =>
+      const hasPermission = requiredPermissions.some((permission) =>
         userPermissions.includes(permission)
       )
 

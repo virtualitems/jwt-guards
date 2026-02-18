@@ -53,7 +53,7 @@ export async function login(req, res) {
       'SELECT permission_id FROM user_permissions WHERE user_id = ?',
       [user.id]
     )
-    permissions = permissionsRows.map(row => row.permission_id)
+    permissions = permissionsRows.map((row) => row.permission_id)
   } catch (err) {
     console.error(err)
     res.status(500).send('Internal server error')

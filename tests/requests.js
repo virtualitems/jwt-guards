@@ -1,4 +1,4 @@
-import { request } from 'node:http';
+import { request } from 'node:http'
 
 /**
  * Performs an HTTP request and returns the response.
@@ -9,30 +9,30 @@ import { request } from 'node:http';
 export function httpRequest(options) {
   return new Promise((resolve, reject) => {
     const req = request(options, (res) => {
-      const chunks = [];
+      const chunks = []
 
       res.on('data', (chunk) => {
-        chunks.push(chunk);
-      });
+        chunks.push(chunk)
+      })
 
       res.on('end', () => {
         resolve({
           statusCode: res.statusCode,
           statusMessage: res.statusMessage,
           headers: res.headers,
-          body: Buffer.concat(chunks),
-        });
-      });
-    });
+          body: Buffer.concat(chunks)
+        })
+      })
+    })
 
     req.on('error', (e) => {
-      reject(e);
-    });
+      reject(e)
+    })
 
     if (options.body !== undefined) {
-      req.write(options.body);
+      req.write(options.body)
     }
 
-    req.end();
-  });
+    req.end()
+  })
 }
